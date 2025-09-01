@@ -48,91 +48,116 @@ from time import sleep
 from bs4 import BeautifulSoup
 import re
 
-pattern = r'0x[a-fA-F0-9]{40}'
+# Regexes for ids
+ADDR40 = re.compile(r'0x[a-fA-F0-9]{40}')
+HASH64 = re.compile(r'0x[a-fA-F0-9]{64}')
 
+def first_href(tr, startswith):
+    """Return (anchor, href) of the first <a> whose href startswith(...) in this row."""
+    for a in tr.find_all('a', href=True):
+        href = a['href']
+        if href.startswith(startswith):
+            return a, href
+    return None, None
+
+def all_hrefs_after(tr, marker_a, startswith):
+    """Yield (anchor, href) for anchors AFTER marker_a whose href startswith(...)."""
+    found_marker = False
+    for a in tr.find_all('a', href=True):
+        if a is marker_a:
+            found_marker = True
+            continue
+        if not found_marker:
+            continue
+        if a['href'].startswith(startswith):
+            yield a, a['href']
+
+def text_or_none(el):
+    return el.get_text(strip=True) if el else None
+
+def clean_number(el):
+    """Join text nodes without inserting spaces (fixes '0 . 0001' -> '0.0001')."""
+    if not el:
+        return None
+    return "".join(el.stripped_strings).replace(" ", "")
+
+def extract_transaction_info(tr):
+    # Tx hash from /tx/ link
+    tx_a, tx_href = first_href(tr, '/tx/')
+    tx_hash = None
+    if tx_href:
+        m = HASH64.search(tx_href)
+        tx_hash = m.group(0) if m else None
+
+    # Block number from /block/ link text
+    blk_a, _ = first_href(tr, '/block/')
+    block = blk_a.get_text(strip=True) if blk_a else None
+
+    # From/To: first two /address/ links after the block link
+    from_addr = to_addr = None
+    if blk_a:
+        addrs = []
+        for a, href in all_hrefs_after(tr, blk_a, '/address/'):
+            m = ADDR40.search(href)
+            if m:
+                addrs.append(m.group(0))
+            if len(addrs) == 2:
+                break
+        if addrs:
+            from_addr = addrs[0]
+            if len(addrs) > 1:
+                to_addr = addrs[1]
+
+    # Value: Etherscan usually tags it with .td_showAmount (includes " ETH")
+    value = text_or_none(tr.select_one('.td_showAmount'))
+
+    # Clean fee/gas strings (remove spaces introduced by nested spans)
+    fee = clean_number(tr.select_one('.showTxnFee'))          # number string (ETH, no unit)
+    gas_price = clean_number(tr.select_one('.showGasPrice'))  # number string (Gwei, no unit)
+
+    # Always return a dict (option 2 only; never skip rows)
+    return {
+        'hash': tx_hash,
+        'block': block,
+        'from': from_addr,
+        'to': to_addr,
+        'value': value,       # e.g., "0.124942 ETH"
+        'fee': fee,           # e.g., "0.00019191" (ETH)
+        'gas_price': gas_price,  # e.g., "9.13902086" (Gwei)
+    }
 
 def scrape_block(blocknumber, page):
-    # the URL of the web page that we want to get transaction data
-    api_url = "https://etherscan.io/txs?block=" + str(blocknumber) + "&p=" + str(page)
-    # HTTP headers used to send a HTTP request
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:72.0) Gecko/20100101 Firefox/72.0'}
-    # Pauses for 0.5 seconds before sending the next request
+    url = f"https://etherscan.io/txs?block={blocknumber}&p={page}"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15; rv:120.0) Gecko/20100101 Firefox/120.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.8',
+    }
     sleep(0.5)
-    # send the request to get data in the webpage
-    response = requests.get(api_url, headers=headers)
-    # get the transaction table from the response data we get
-    txs = BeautifulSoup(response.content, 'html.parser').select('table.table-hover tbody tr')
-    for row in txs:
+    resp = requests.get(url, headers=headers, timeout=20)
+    resp.raise_for_status()
+
+    soup = BeautifulSoup(resp.content, 'html.parser')
+    rows = soup.select('table.table-hover tbody tr')
+    if not rows:
+        snippet = soup.get_text(" ", strip=True)[:200]
+        print("[warn] No rows parsed; anti-bot or layout change? Snippet:", snippet)
+
+    for row in rows:
         tx = extract_transaction_info(row)
-        print("transaction of ID:", tx['hash'], "block:", tx['block'], "from address", tx['from'], "toaddress", tx['to'], "transaction fee", tx['fee'])
+        print(
+            "transaction of ID:", tx.get('hash'),
+            "block:", tx.get('block'),
+            "from address", tx.get('from'),
+            "toaddress", tx.get('to'),
+            "transaction fee", tx.get('fee'),
+            "gas price", tx.get('gas_price'),
+            "value", tx.get('value')
+        )
 
-
-def extract_transaction_info(tr_element):
-    try:
-        # Extract transaction hash
-        tx_hash = tr_element.select_one('.myFnExpandBox_searchVal').text.strip()
-
-        # Extract transaction type
-        tx_type = tr_element.select_one('span[data-title]').text.strip()
-
-        # Extract block number
-        block = tr_element.select_one('td:nth-child(4) a').text.strip()
-
-        # Extract timestamp
-        timestamp = tr_element.select_one('td.showAge span')['data-bs-title']
-
-        # Extract from address
-        from_element = tr_element.select_one('td:nth-child(8) a')
-        from_addr = tr_element.select_one('td:nth-child(8) a').text.strip()
-        if 'data-bs-title' in from_element.attrs:
-            from_full = from_element['data-bs-title']
-        else:
-            # Try to get from span if <a> doesn't have it
-            from_span = from_element.select_one('span[data-bs-title]')
-            from_full = from_span['data-bs-title'] if from_span else from_addr
-        from_address = re.search(pattern, from_full).group()
-
-        # Extract to address
-        to_element = tr_element.select_one('td:nth-child(10) a')
-        to_addr = to_element.text.strip()
-        # to_full = to_element['data-bs-title'] if 'data-bs-title' in to_element.attrs else to_addr
-        if 'data-bs-title' in to_element.attrs:
-            to_full = to_element['data-bs-title']
-        else:
-            # Try to get from span if <a> doesn't have it
-            to_span = to_element.select_one('span[data-bs-title]')
-            to_full = to_span['data-bs-title'] if to_span else to_addr
-        to_address = re.search(pattern, to_full).group()
-
-        # Extract value
-        value = tr_element.select_one('.td_showAmount').text
-
-        # Extract transaction fee
-        tx_fee = tr_element.select_one('.showTxnFee').text.strip()
-
-        # Extract gas price if available
-        gas_price = tr_element.select_one('.showGasPrice')
-        gas_price = gas_price.text.strip() if gas_price else None
-
-        return {
-            'hash': tx_hash,
-            'type': tx_type,
-            'block': block,
-            'timestamp': timestamp,
-            'from': from_address,
-            'to': to_address,
-            'value': value,
-            'fee': tx_fee,
-            'gas_price': gas_price
-        }
-
-    except Exception as e:
-        print(f"Error extracting transaction info: {e}")
-        return None
-
-
-if __name__ == "__main__":  # entrance to the main function
+if __name__ == "__main__":
     scrape_block(15479087, 1)
+
 ```
 
 In this exercise, you will run a python code to crawl data from the etherscan website automatically. The example code above crawls the etherscan web page  (i.e., https://etherscan.io/txs?block=15479087) to read the first 50 transactions in block `15479087`.
