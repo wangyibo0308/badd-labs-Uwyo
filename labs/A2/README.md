@@ -154,9 +154,12 @@ Write a Smart contract to implement the Rock-Paper-Scissors game in solidity. Yo
 Deliverable
 ---
 
-1. For exercise 1/2/3/4/5, submit the screenshot that runs the crawler code on your computer.
-    - If there are too many results that cannot fit into a single screen, you can randomly choose two screens and do two screenshots. 
-2. For exercise 2/4/5, submit your modified Solidity file and the screenshot that runs the code on your computer. The Solidity program needs to be stored in a `.sol` file in plaintext format.
+1. For Exercises 1, 2, 3, 4, and 5, submit screenshots from Remix showing the compilation, deployment, and execution of your Solidity smart contracts.
+- Make sure the screenshot clearly shows the function execution results.
+- If the output is too large to fit in one screen, you may provide two separate screenshots that together cover the full result.
+2. For Exercises 2, 4, and 5, submit both:
+- Your modified Solidity source code file (.sol in plaintext format).
+- A screenshot from Remix showing the program running successfully.
 
 FAQ
 ---
