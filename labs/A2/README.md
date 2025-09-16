@@ -54,7 +54,7 @@ Exercise 3: Execute SC for single-account Ether bank
 ---
 
 ```
-pragma solidity ^ 0.4.13;
+pragma solidity ^ 0.4.26;
 contract bank {
   uint256 EtherBalance_Alice = 0;
   function deposit() public payable {
