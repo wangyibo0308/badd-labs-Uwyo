@@ -12,16 +12,16 @@ In this lab, you will write smart contracts to implement your own version of Uni
 
 We provide companion slides to introduce more background on AMM: https://www.dropbox.com/s/8749eybqaw67afd/3.DeFi-LabB1.pdf?dl=0
 
-| Tasks | Points | CS student | Finance student |
-| --- | --- | --- | --- |
-|  1  | 10 | Required | Required |
-|  2  | 20 | Required | Required |
-|  3  | 40 | Required | Required |
-|  4  | 40 | Bonus    | Bonus |
-|  5  | 40 | Required | Bonus |
-|  6  | 20 | Required | Bonus |
+| Tasks | Points | CS student |
+| --- | --- | --- |
+|  1  | 10 | Required |
+|  2  | 20 | Required |
+|  3  | 20 | Required |
+|  4  | 20 | Bonus    |
+|  5  | 20 | Required |
+|  6  | 10 | Required |
 
-For your interest, we also provide a challenge exercise 7 on this [[page](refund.md)]. Exercise 7 will not be graded and we will not provide solutions as it can be open-ended. 
+ 
 
 Exercise 1. Execute ERC20 token transfer
 ---
