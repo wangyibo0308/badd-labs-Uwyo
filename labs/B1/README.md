@@ -10,7 +10,7 @@ In today's DEX market, Uniswap is the most popular service at all-time. The DEX 
 
 In this lab, you will write smart contracts to implement your own version of Uniswap V3. Uniswap adopts the automated market maker (AMM) protocol in which a trader trades directly with a smart-contract intermediary called pool. This is unlike other DEX designs like order books. Besides Uniswap V3, AMM is also adopted in other popular services, including Uniswap V2, Sushiswap, Pancakeswap, etc.
 
-We provide companion slides to introduce more background on AMM: https://www.dropbox.com/s/8749eybqaw67afd/3.DeFi-LabB1.pdf?dl=0
+We provide companion slides to introduce more background on AMM: https://www.dropbox.com/scl/fi/qqlvzmqa5w0yivluwmr77/3.DeFi.pptx?rlkey=aq7lao6u5vfnygrzelmafg0me&dl=0
 
 | Tasks | Points | CS student |
 | --- | --- | --- |
