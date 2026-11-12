@@ -23,7 +23,7 @@ After completing this lab, you should be able to:
 
 ## Experimental setup and safety
 
-1. Open [Remix IDE](https://remix.ethereum.org/) and create a new Solidity file. You may start from the provided `Lab_B5_Starter.sol`[https://github.com/wangyibo0308/badd-labs-Uwyo/blob/master/labs/B5/Lab_B5_Starter.sol].
+1. Open [Remix IDE](https://remix.ethereum.org/) and create a new Solidity file. You may start from the provided [`Lab_B5_Starter.sol`](https://github.com/wangyibo0308/badd-labs-Uwyo/blob/master/labs/B5/Lab_B5_Starter.sol).
 2. In **Solidity Compiler**, use a stable Solidity `0.8.x` compiler with version **0.8.20 or later** (but below `0.9.0`). Record the compiler version in your report.
 3. In **Deploy & Run Transactions**, select **Remix VM**, *not* Browser Extension, an injected wallet, a public testnet, or mainnet. This sandbox uses simulated Ether only.
 4. Use a fresh Remix VM or fresh contract instances for each experiment so that old deposits cannot affect the results.
